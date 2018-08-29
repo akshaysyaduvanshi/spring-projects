@@ -9,7 +9,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import javax.validation.Valid
 
 @RestController
-class UserController(@Autowired val userRepo: UserSpringDataRepo) {
+class UserController(@Autowired val userRepo: UserSpringDataRepo,
+                     @Autowired val postRepo: PostSpringDataRepo) {
     @GetMapping(path = ["/user"])
     fun getUsers(): List<User> {
         return userRepo.findAll()
@@ -49,5 +50,28 @@ class UserController(@Autowired val userRepo: UserSpringDataRepo) {
         }
         userRepo.deleteById(id)
         return user!!
+    }
+
+    @GetMapping(path = ["/user/{id}/posts"])
+    fun getPostForAUser(@PathVariable id: Int): List<Post>? {
+        try {
+            return userRepo.getOne(id).posts
+
+        } catch (e: Exception) {
+            throw UserNotFoundException(e.message!!)
+        }
+    }
+
+    @PostMapping(path = ["/user/{id}/posts"])
+    fun createPost(@PathVariable id: Int, @RequestBody post: Post): Post {
+        try {
+            val user =  userRepo.getOne(id)
+            post.user = user
+            postRepo.save(post)
+            return post
+
+        } catch (e: Exception) {
+            throw UserNotFoundException(e.message!!)
+        }
     }
 }
